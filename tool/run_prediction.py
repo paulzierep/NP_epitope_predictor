@@ -12,3 +12,7 @@ results = predictor.prediction_chain(smiles, only_epitopes = False, compute_k_be
 json_text = Results_To_Json(results)
 
 print(json_text)
+
+# html_text = Results_To_Html(results)
+
+# print(html_text)
