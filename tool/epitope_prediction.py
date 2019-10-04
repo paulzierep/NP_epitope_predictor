@@ -8,13 +8,15 @@ from sklearn.cluster import KMeans
 from sklearn.ensemble import RandomForestClassifier
 
 from fp_generation import Smiles_DF_To_Folded_FP_DF, Smiles_DF_To_Unfolded_FP_DF, Single_Smiles_To_Unfolded_FP_DF
-from fp_drawing import DrawBitFromSmiles
+from rdkit_drawing import DrawBitFromSmiles, smiles2svg
 
 from feature_stats import Compute_Feature_Enrichment_DF
 
 from similarity_utils import Euclidiean_Distance_Query, Add_ChEBI_IP, RDKit_Mol_Similarity
 
 from output_utils import Results_To_Html, Results_To_Json
+
+from mol_sanitizer import input_check
 
 #important for the df output (truncuation kills the SVG image)
 #pd.set_option('display.max_colwidth', -1)
@@ -61,6 +63,11 @@ class Molecule_Group_Classifier:
                     df = pd.read_csv(f_path, sep = "\t")
                     df = df.loc[(df["Corr-PValue"] <= 0.05),:]
                     df = df.sort_values(by = ["PValue", "Fold"], ascending = [True, False])
+                    df.reset_index(inplace = True, drop = True)
+
+                    # print(df)
+                    # exit()
+
                     df = df.iloc[:10,:]
 
                     self.ontos[cluster_id] = df
@@ -85,6 +92,17 @@ class Molecule_Group_Classifier:
 
         return(cluster_infos)
 
+
+    # def get_cluster_stats(cluster):
+
+    #     cluster_infos = {}
+    #     cluster_infos["Cluster"] = int(cluster)
+    #     cluster_infos["Members"] = self.member_counts[cluster]
+    #     cluster_infos["Warning"] = self.warnings[cluster]
+    #     cluster_infos["Name"] = self.names[cluster]
+    #     cluster_infos["Ontology"] = self.ontos[cluster]
+
+    #     return(cluster_infos)
 
 ###################
 #Test Epitope_Clf
@@ -203,15 +221,20 @@ class Epitope_Predictor:
         X_sel.index = X_sel.index.astype("str")
 
         #combine the gernerated fingerprints with the FP info table
+        #take only fingerprints which are present in the query mol -> inner flag
         FP_imp = pd.concat([X_sel, self.enrichment_df], join = "inner", axis = 1)
-        FP_imp.rename(columns={0:"Observed"}, inplace = True)
-        FP_imp.index.name = "Fingerprint ID"
+        FP_imp.rename(columns={0:"Query"}, inplace = True)
+
+        FP_imp.index.name = "FP ID"
 
         #add the figures
         FP_imp["Figure"] = FP_imp.index.map(lambda fp_id: DrawBitFromSmiles(smiles, fp_id))
 
+        #the query FPs should be next to the target FPs
+        FP_imp = FP_imp.reindex(columns=['MP','p corr.','Samples (P) %','Fold enrich.','M diff.','Figure','Query'])
+
         #the sorting gets lost due to concat (?)
-        FP_imp = FP_imp.sort_values(by = ["Fold enrich."], ascending = False)
+        FP_imp = FP_imp.sort_values(by = ["p corr."], ascending = True)
 
         FP_imp = FP_imp.T
 
@@ -231,16 +254,33 @@ class Epitope_Predictor:
         compounds to the df, based on euclidean distance
         """
 
+        #if the cluster cannot be fitted, (Cluster 3 for example), return empty df
         if self.cannot_be_fitted:
             return(pd.DataFrame())
 
+        #if the matches are ordered based on 
+        #similarity all similarities must be computed
+        if sort_order == "T":
+            compute_k_best = None
+
+        ######################
+        #Get the specific df of important FPs for this cluster 
+        ######################
+
         FP_imp = self.get_FP_importance(smiles)
 
-        query_fps = FP_imp.loc[["Observed"],:]
+        ######################
+        #Query mols and their fingerprints from the DB (X)
+        #compute E and T similarity for each
+        ######################
+
+        query_fps = FP_imp.loc[["Query"],:]
 
         if only_epitopes:
+            #select fps which are present in the query and epitopes
             target_fps = self.X.loc[(self.y == 1),query_fps.columns]
         else:
+            #select fps which are present in the query and any molecule from ChEBI
             target_fps = self.X.loc[:,query_fps.columns]
 
         similar_mols = Euclidiean_Distance_Query(query_fps, target_fps, k_best = compute_k_best)
@@ -252,14 +292,16 @@ class Epitope_Predictor:
         similar_mols["Tanimoto"] = similar_smiles.apply(lambda target: RDKit_Mol_Similarity(smiles, target))
         # #print(self.y_smiles.loc[similar_mols.index].apply(lambda target: RDKit_Mol_Similarity(smiles, target)))
 
-        #lookup if the mol is a epitope
+        #lookup if the mol is a epitope (always positive when only_epitopes = True)
         similar_mols["Epitope"] = self.y.loc[similar_mols.index]
+        #show as yes and no
+        similar_mols["Epitope"] = similar_mols["Epitope"].apply(lambda x: "Yes" if x == 1 else "No")
 
         similar_mols["IDs"] = similar_mols.index
 
         similar_mols.index = ["Target {0}".format(x) for x in range(similar_mols.shape[0])]
 
-        #add link to CheBI
+        #add link to ChEBI
         similar_mols["IDs"] = similar_mols["IDs"].apply(Add_ChEBI_IP)
 
         if sort_order == "E":
@@ -269,12 +311,21 @@ class Epitope_Predictor:
 
         similar_mols = similar_mols.iloc[:show_k_best,:]
 
+        ######################
+        #Combine the important FPs and the query FPs for the final output
+        ######################
+
         imp_with_sim = pd.concat([FP_imp, similar_mols], sort=False)
 
+        #make it look nicer
         imp_with_sim.fillna("", inplace = True)
+        imp_with_sim.index.name = "FP ID"
 
+        #moved to uotput_utils
         if as_html:
             imp_with_sim = imp_with_sim.to_html(escape=False)
+
+        imp_with_sim = imp_with_sim.T
 
         return(imp_with_sim)
 
@@ -378,6 +429,21 @@ class NP_Epitope_Prediction:
 
         #assign the onotogy from there
         self.custom_cluster_descri = os.path.join(data_storage, "cluster_descri.csv")
+
+        #cluster stats (like the feature importance) are dumped here
+        #self.cluster_stats = os.path.join(data_storage, "cluster_stats")
+
+    # def generate_cluster_stats(self):
+    #     """ 
+    #     Utility function which creates a html/latex output of each cluster.
+    #     """
+
+    #     os.makedirs(self.cluster_stats, exist_ok= True)
+
+    #     with open(self.cluster_clf_storage,'rb') as clf_f:
+    #         cluster_clf = pickle.load(clf_f)        
+
+
 
     def load_target(self, smiles_df):
         """
@@ -661,11 +727,27 @@ class NP_Epitope_Prediction:
 
         results = {}
 
-        results["cluster_info"] = self.predict_clustering(smiles)
-        results["classify_info_b"] = self.predict_classification(smiles, results["cluster_info"]["Cluster"], "b_cell", **kwargs)
-        results["classify_info_t"] = self.predict_classification(smiles, results["cluster_info"]["Cluster"], "t_cell", **kwargs)
+        is_good, error = input_check(smiles)
 
-        return(results)
+        if is_good:
+
+            results["error"] = None
+
+            #it looks nice to have a figure as output as well
+            results["input_svg"] = smiles2svg(smiles)
+            results["cluster_info"] = self.predict_clustering(smiles)
+            results["classify_info_b"] = self.predict_classification(smiles, results["cluster_info"]["Cluster"], "b_cell", **kwargs)
+            results["classify_info_t"] = self.predict_classification(smiles, results["cluster_info"]["Cluster"], "t_cell", **kwargs)
+            return(results)
+
+        else:
+            results["error"] = error
+            results["input_svg"] = None
+            results["cluster_info"] = None
+            results["classify_info_b"] = None
+            results["classify_info_t"] = None
+            return(results)
+
 
     def fit_chain(self, smiles_df):
         """
@@ -697,6 +779,9 @@ class NP_Epitope_Prediction:
         print("Fit clf for t_cells")
         self.fit_classification(cell_type = "t_cell")
 
+        print("Update the ontology description")
+        self.update_onto_mapping()
+
         print("Add FP importance to classification")
         self.add_FP_imp_to_classification()
 
@@ -717,8 +802,8 @@ class NP_Epitope_Prediction:
 # exit()
 
 # print("initiate class")
-# predictor = NP_Epitope_Prediction(data_storage = DATA_PATH)
-#predictor.fit_chain(smiles_df)
+#predictor = NP_Epitope_Prediction(data_storage = DATA_PATH)
+# predictor.add_FP_imp_to_classification()
 
 #predictor.get_IDs_for_onto_mapping()
 

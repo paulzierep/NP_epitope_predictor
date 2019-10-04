@@ -14,9 +14,14 @@ fp = os.path.join(DATA_PATH, "fp_folded.csv")
 
 y = pd.read_csv(target, index_col = "index")
 
-y = y.loc[(y["b_cell"] == 1),"smiles"].sample(10).to_list()
 
-print(y)
+
+y = y.loc[(y["t_cell"] == 1) & (y["clusters"] == 0),"smiles"].sample(10).to_list()
+
+for sample in y:
+	print(sample)
+
+# print(y)
 
 exit()
 

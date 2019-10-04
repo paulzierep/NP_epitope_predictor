@@ -6,6 +6,37 @@ from rdkit.Chem import AllChem
 from io import StringIO
 import sys
 
+def input_check(smiles):
+
+    #taken form http://rdkit.blogspot.com/2016/03/capturing-error-information.html
+    Chem.WrapLogs()
+    sio = sys.stderr = StringIO()
+
+    mol = Chem.MolFromSmiles(smiles)
+
+    if mol:
+        #redirect stderr to normal interpreter stderr after this function
+        sys.stderr = sys.__stderr__
+        return(True, "")
+    else:
+        error_text = sio.getvalue()
+
+        #redirect stderr to normal interpreter stderr after this function
+        sys.stderr = sys.__stderr__
+
+        return(False, error_text)
+
+
+###################
+#Test input_check
+###################
+# is_good, error = input_check("CO(O)O(O)OCCC")
+# print(is_good)
+# print(error)
+
+# exit()
+
+
 def simple_sanitizer(smiles_df):
     for index, row in smiles_df.iterrows():
 
@@ -188,10 +219,43 @@ def map_wrong_chabi_entries(SDF_PATH, ERROR_PATH):
             id_counter += 1
 
     error_df = pd.read_csv(ERROR_PATH, index_col = "index")
-    error_df["new_id"] = error_df.index
-    error_df["new_id"].replace(id_mapper, inplace = True)
-    error_df.set_index("new_id", drop = True, inplace = True)
+    error_df["chebi_id"] = error_df.index
+    error_df["chebi_id"].replace(id_mapper, inplace = True)
+    error_df.set_index("chebi_id", drop = True, inplace = True)
     error_df.to_csv(ERROR_PATH)
+
+
+def filter_duplicates(smiles_df):
+    """
+    Takes the df, returns one df without duplicates and one df 
+    of the doublicates, listing the counts of the doubs and a group name
+    (unique ID for each group)
+    """
+
+    smiles_df_no_doubs = smiles_df.copy()
+
+    smiles_df["is_doub"] = smiles_df.duplicated(subset = "smiles", keep = False)
+    smiles_df_sel = smiles_df.loc[(smiles_df["is_doub"] == 1),:]
+
+    def add_count(group):
+        group["doub_count"] = group.shape[0]
+        return(group)
+
+    smiles_df_sel = smiles_df_sel.groupby("smiles").apply(add_count)
+    smiles_df_sel["G_ID"] = smiles_df_sel.groupby("smiles").grouper.group_info[0]
+
+    smiles_df_no_doubs = smiles_df_no_doubs.drop_duplicates(subset = "smiles")
+
+    return(smiles_df_no_doubs, smiles_df_sel)
+
+
+# DATA_PATH = "ML_data"
+# SMILES_PATH = os.path.join(DATA_PATH, "chebi_san_2.csv")
+# smiles_df_no_doubs, smiles_df_sel = filter_duplicates(SMILES_PATH)
+
+# print(smiles_df_no_doubs)
+# print(smiles_df_sel)
+# exit()
 
 ###################
 #Test map_wrong_chabi_entries
@@ -199,7 +263,7 @@ def map_wrong_chabi_entries(SDF_PATH, ERROR_PATH):
 
 # DATA_PATH = "ML_data"
 # SDF_PATH = os.path.join(DATA_PATH, "ChEBI_lite_3star.sdf")
-# ERROR_PATH = os.path.join(DATA_PATH, "chebi_parse_errors.csv")
+# ERROR_PATH = os.path.join(DATA_PATH, "chebi_parse_errors_1.csv")
 
 # map_wrong_chabi_entries(SDF_PATH, ERROR_PATH)
 

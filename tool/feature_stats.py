@@ -87,9 +87,9 @@ def Compute_Feature_Enrichment_DF(X, y):
     #enrichment_df = enrichment_df.loc[(enrichment_df["Samples coverage %"] > 0.20),:] 
 
     #enrichment_df = enrichment_df.sort_values(by = ["s. p"], ascending = False)
-    #enrichment_df = enrichment_df.sort_values(by = ["p corr."], ascending = True)
+    enrichment_df = enrichment_df.sort_values(by = ["p corr."], ascending = True)
 
-    enrichment_df = enrichment_df.sort_values(by = ["M diff."], ascending = False)
+    #enrichment_df = enrichment_df.sort_values(by = ["Fold enrich."], ascending = False)
 
     enrichment_df = enrichment_df.loc[:,["MP", "p corr.", "Samples (P) %", "Fold enrich.", "M diff."]]
 

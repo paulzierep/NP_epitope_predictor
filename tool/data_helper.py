@@ -1,4 +1,6 @@
-from mol_sanitizer import SDF_Parser, Mol_Sanitizer
+from mol_sanitizer import SDF_Parser, Mol_Sanitizer, filter_duplicates
+import os
+import pandas as pd
 
 class NP_Epitope_Data_Conversion:
     """
@@ -69,20 +71,19 @@ class NP_Epitope_Data_Conversion:
 
         print("Input rows: {0}".format(csv_df.shape[0]))
 
-        #store doublicates
-        csv_df["is_doublicated"] = csv_df.duplicated(subset = "smiles")
-        csv_df.to_csv(self.SDF_DUBS_PATH, index = False)
+        no_doubs, doub_stats = filter_duplicates(csv_df)
 
-        #remove doublicates
-        csv_df.drop_duplicates(subset = "smiles", inplace = True)
+        #store doublicates
+        # csv_df["is_doublicated"] = csv_df.duplicated(subset = "smiles")
+        doub_stats.to_csv(self.SDF_DUBS_PATH, index = True)
 
         #################################
         #Optional: Remove smiles with a *
         #################################
 
-        print("Input rows without duplicates: {0}".format(csv_df.shape[0]))
+        print("Input rows without duplicates: {0}".format(no_doubs.shape[0]))
 
-        self.csv_df_trim = csv_df.loc[:,["smiles"]]
+        self.csv_df_trim = no_doubs.loc[:,["smiles"]]
 
     def assign_epitopes(self, CSV_PATH, epitope_type, id_column = "Non-peptidic epitope Accession"):
 
@@ -110,9 +111,10 @@ class NP_Epitope_Data_Conversion:
 # T_CELL = os.path.join(DATA_PATH, "epitope_table_t_cell_pos.csv")
 
 # converter = NP_Epitope_Data_Conversion(DATA_PATH)
-# converter.create_ML_data(SDF_PATH, B_CELL, T_CELL)
+# converter.create_ML_data(SDF_PATH, B_CELL, T_CELL, skip_sdf = True)
 
 # exit()
 # converter.load_chebi_csv()    
 # converter.assign_epitopes(B_CELL, "b_cell")
+# converter.assign_epitopes(B_CELL, "t_cell")
 # print(converter.csv_df_trim)
