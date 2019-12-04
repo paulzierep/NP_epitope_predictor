@@ -15,7 +15,7 @@ import collections
 import itertools
 # from IPython.display import display, SVG
 
-def DrawBitFromSmiles(smiles, fp_choice):
+def DrawBitFromSmiles(smiles, fp_choice, weboutput = True):
 
     fp_choice = int(fp_choice)
 
@@ -26,11 +26,18 @@ def DrawBitFromSmiles(smiles, fp_choice):
                                       3, 
                                       bitInfo=bitInfo, 
                                       useChirality=True)
+
+    if fp_choice in bitInfo:
     
-    svg = Draw.DrawMorganBit(mol, fp_choice, bitInfo, useSVG=True)
-    svg = svg.replace("\n","")
-    # exit()
-    return(svg)
+        svg = Draw.DrawMorganBit(mol, fp_choice, bitInfo, useSVG=True)
+
+        if weboutput:
+            svg = svg.replace("\n","")
+
+        return(svg)
+
+    else:
+        return(None)
 
 
 def mol2svg(mol,molSize=(400,400),kekulize=True, **kwargs):

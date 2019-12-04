@@ -1,0 +1,57 @@
+<style>
+
+.header {
+/*padding: 60px;*/
+text-align: center;
+background: #1abc9c;
+color: white;
+font-size: 30px;
+}
+
+.box1 {
+/*background: #f5f5f5;*/
+/*background-color: #f7ffe6;*/
+border: 5px solid #e5e5e5;
+width: 1100px;
+margin-top: 10px;
+}
+
+</style>
+
+<div class="box1">
+
+<h4 class = header> 
+Non-peptidic epitope prediction.
+Insert SMILES to predict immunogenicity and detect important substructures.
+</h4>
+
+<form method="post" enctype="multipart/form-data">
+
+{% csrf_token %} <!--  needed for the form-->
+
+<center>
+<table cellpadding="0" cellspacing="0" border="0" style="width:100%; border-radius: 25px; border:0px solid #cde2f5;background:#fff;">
+
+<!-- When the form is manually rendered the attributes can be styled and customized -->
+{% for field in form %}
+<tr>
+		<!-- using the help text of them form class to assign the tooltip help text -->
+        <td>{{ field.errors }}</td>
+        <td>{{ field.label_tag }}</td>
+        <td>{{ field }}</td>
+
+</tr>
+{% endfor %}
+
+<!-- {{ form }} -->
+</table>
+
+<br>
+
+<button type="submit"> Submit SMIELS </button>
+
+</form>
+
+</center>
+
+</div>

@@ -52,6 +52,40 @@ def Results_To_Json(results):
 
     return(json_results)
 
+
+def Results_To_Django(results):
+
+    #make a copy of the dict and its items
+    #otherwise the .to_dict() will change the df and 
+    #the Results_To_Html does not work
+    results_copy = copy.deepcopy(results)
+    
+    if results["error"]:
+        return(results)
+
+    # results_copy['cluster_info']['Ontology'] = results_copy['cluster_info']['Ontology'].T.to_dict()
+    # results_copy['classify_info_b']['fp_imp'] = results_copy['classify_info_b']['fp_imp'].T.to_dict()
+    # results_copy['classify_info_t']['fp_imp'] = results_copy['classify_info_t']['fp_imp'].T.to_dict()
+
+    results_copy['cluster_info']['Ontology'] = \
+    results_copy['cluster_info']['Ontology'].rename(columns={
+    "ChEBI_ID": "ChEBI ID",
+    "ChEBI_Name": "ChEBI Name",
+    "Corr-PValue": "Corr. p",
+    "PValue": "p",
+    "Fold": "Fold",
+    "SamplePercentage": "Sample Percentage",
+     })
+
+
+    results_copy['cluster_info']['Ontology'] = df_float_formatting(results_copy['cluster_info']['Ontology']).to_html(escape=False, index = False)
+    results_copy['classify_info_b']['fp_imp'] = df_float_formatting(results_copy['classify_info_b']['fp_imp']).to_html(escape=False,)
+    results_copy['classify_info_t']['fp_imp'] = df_float_formatting(results_copy['classify_info_t']['fp_imp']).to_html(escape=False,)
+
+    # results_copy = json.dumps(results_copy)
+
+    return(results_copy)
+
 # <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
 
 # </head>

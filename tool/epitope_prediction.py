@@ -10,7 +10,7 @@ from sklearn.ensemble import RandomForestClassifier
 from fp_generation import Smiles_DF_To_Folded_FP_DF, Smiles_DF_To_Unfolded_FP_DF, Single_Smiles_To_Unfolded_FP_DF
 from rdkit_drawing import DrawBitFromSmiles, smiles2svg
 
-from feature_stats import Compute_Feature_Enrichment_DF
+from feature_stats import Compute_Feature_Enrichment_DF, get_figures_of_FPs
 
 from similarity_utils import Euclidiean_Distance_Query, Add_ChEBI_IP, RDKit_Mol_Similarity
 
@@ -18,6 +18,7 @@ from output_utils import Results_To_Html, Results_To_Json
 
 from mol_sanitizer import input_check
 
+import re
 #important for the df output (truncuation kills the SVG image)
 #pd.set_option('display.max_colwidth', -1)
 
@@ -87,6 +88,7 @@ class Molecule_Group_Classifier:
         cluster_infos["Cluster"] = int(prediction)
         cluster_infos["Members"] = self.member_counts[prediction]
         cluster_infos["Warning"] = self.warnings[prediction]
+
         cluster_infos["Name"] = self.names[prediction]
         cluster_infos["Ontology"] = self.ontos[prediction]
 
@@ -201,6 +203,12 @@ class Epitope_Predictor:
         if not self.cannot_be_fitted:
             self.enrichment_df = Compute_Feature_Enrichment_DF(self.X,self.y)
 
+    def get_enrichment_df(self, p_cut_off = 0.05):
+
+        e_df = self.enrichment_df.loc[(self.enrichment_df['p corr.'] <= p_cut_off),:]
+
+        return(e_df)
+
     def get_FP_importance(self, smiles):
         """
         Adds the FPs of the query smiles to the FP df, allows to directly observe the 
@@ -222,7 +230,7 @@ class Epitope_Predictor:
 
         #combine the gernerated fingerprints with the FP info table
         #take only fingerprints which are present in the query mol -> inner flag
-        FP_imp = pd.concat([X_sel, self.enrichment_df], join = "inner", axis = 1)
+        FP_imp = pd.concat([X_sel, self.get_enrichment_df()], join = "inner", axis = 1)
         FP_imp.rename(columns={0:"Query"}, inplace = True)
 
         FP_imp.index.name = "FP ID"
@@ -231,7 +239,7 @@ class Epitope_Predictor:
         FP_imp["Figure"] = FP_imp.index.map(lambda fp_id: DrawBitFromSmiles(smiles, fp_id))
 
         #the query FPs should be next to the target FPs
-        FP_imp = FP_imp.reindex(columns=['MP','p corr.','Samples (P) %','Fold enrich.','M diff.','Figure','Query'])
+        FP_imp = FP_imp.reindex(columns=['p corr.','Samples (P) %','Fold',"Mean diff.",'Figure','Query'])
 
         #the sorting gets lost due to concat (?)
         FP_imp = FP_imp.sort_values(by = ["p corr."], ascending = True)
@@ -299,8 +307,6 @@ class Epitope_Predictor:
 
         similar_mols["IDs"] = similar_mols.index
 
-        similar_mols.index = ["Target {0}".format(x) for x in range(similar_mols.shape[0])]
-
         #add link to ChEBI
         similar_mols["IDs"] = similar_mols["IDs"].apply(Add_ChEBI_IP)
 
@@ -310,6 +316,8 @@ class Epitope_Predictor:
             similar_mols = similar_mols.sort_values(by = ["Tanimoto", "E Dist."], ascending = [False,True])
 
         similar_mols = similar_mols.iloc[:show_k_best,:]
+
+        similar_mols.index = ["Target {0}".format(x) for x in range(similar_mols.shape[0])]
 
         ######################
         #Combine the important FPs and the query FPs for the final output
@@ -321,7 +329,7 @@ class Epitope_Predictor:
         imp_with_sim.fillna("", inplace = True)
         imp_with_sim.index.name = "FP ID"
 
-        #moved to uotput_utils
+        #moved to output_utils
         if as_html:
             imp_with_sim = imp_with_sim.to_html(escape=False)
 
@@ -575,6 +583,16 @@ class NP_Epitope_Prediction:
         with open(self.cluster_clf_storage,'wb') as clf_f:
             pickle.dump(cluster_clf,clf_f)
 
+    def get_onto_mapping_fold(self):
+
+        with open(self.cluster_clf_storage,'rb') as clf_f:
+            cluster_clf = pickle.load(clf_f)
+
+            for cluster, onto in cluster_clf.ontos.items():
+                print(cluster)
+                print(onto.loc[:,'Fold'].mean())
+
+
     def update_cluster_descri(self):
 
         descri_df = pd.read_csv(self.custom_cluster_descri, index_col = "index")
@@ -749,6 +767,73 @@ class NP_Epitope_Prediction:
             return(results)
 
 
+    def compile_prediction_summary(self, output_folder = 'predictor_summary'):
+
+        os.makedirs(output_folder, exist_ok = True)
+
+        #get the clustering object
+        with open(self.cluster_clf_storage,'rb') as clf_f:
+            cluster_clf = pickle.load(clf_f)
+
+        print('write Ontos')
+        #write the ontos
+        cluster_paths = {}
+        for cluster_id, onto in cluster_clf.ontos.items():
+
+            cluster_paths[cluster_id] = os.path.join(output_folder, str(cluster_id))
+            os.makedirs(cluster_paths[cluster_id], exist_ok = True)
+
+            out_path = os.path.join(cluster_paths[cluster_id], '{0}_onto.csv'.format(cluster_id))
+            onto.to_csv(out_path, index = False)
+
+
+        print('Get classifiers')
+
+        #get the classification objects
+        t_cells = {}
+        b_cells = {}
+
+        for clf_file in os.listdir(self.classifier_clf_storage):
+
+            clf_path = os.path.join(self.classifier_clf_storage, clf_file)
+
+            cluster = int(re.search('cluster_(\d)_type', clf_file).groups()[0])
+
+            if 't_cell' in clf_file:
+                with open(clf_path, 'rb') as clf_f:
+                    t_cells[cluster] = pickle.load(clf_f)
+
+            if 'b_cell' in clf_file:
+                with open(clf_path, 'rb') as clf_f:
+                    b_cells[cluster] = pickle.load(clf_f)
+
+        print('Get important FPs')
+
+        #get the important Fingerprints
+        for cluster_id, cluster_clf in b_cells.items():
+
+            if isinstance(cluster_clf.enrichment_df, pd.DataFrame):
+
+                out_path = os.path.join(cluster_paths[cluster_id], '{0}_b_FPs.csv'.format(cluster_id))
+                cluster_clf.enrichment_df.to_csv(out_path)
+
+                out_folder = os.path.join(cluster_paths[cluster_id], '{0}_b_FPs'.format(cluster_id))
+
+                get_figures_of_FPs(cluster_clf.enrichment_df.index, cluster_clf.y_smiles, out_folder)
+
+
+        for cluster_id, cluster_clf in t_cells.items():
+
+            if isinstance(cluster_clf.enrichment_df, pd.DataFrame):
+
+                out_path = os.path.join(cluster_paths[cluster_id], '{0}_t_FPs.csv'.format(cluster_id))
+                cluster_clf.enrichment_df.to_csv(out_path)
+
+                out_folder = os.path.join(cluster_paths[cluster_id], '{0}_t_FPs'.format(cluster_id))
+
+                get_figures_of_FPs(cluster_clf.enrichment_df.index, cluster_clf.y_smiles, out_folder)
+
+
     def fit_chain(self, smiles_df):
         """
         Performs all fitting steps (FP generation, clf fitting)
@@ -793,16 +878,20 @@ class NP_Epitope_Prediction:
 ##########################
 
 #DATA_PATH = "ML_data"
-# SMILES_PATH = os.path.join(DATA_PATH, "chebi_san_assigned.csv")
-# smiles_df = pd.read_csv(SMILES_PATH, index_col = "index")
-# smiles_df = smiles_df.iloc[:200,:]
+# # SMILES_PATH = os.path.join(DATA_PATH, "chebi_san_assigned.csv")
+# # smiles_df = pd.read_csv(SMILES_PATH, index_col = "index")
+# # smiles_df = smiles_df.iloc[:200,:]
 
-# smiles_df.to_csv("test_data/chebi_san_assigned_for_tests.csv")
+# # smiles_df.to_csv("test_data/chebi_san_assigned_for_tests.csv")
 
-# exit()
+# # exit()
 
-# print("initiate class")
+#print("initiate class")
 #predictor = NP_Epitope_Prediction(data_storage = DATA_PATH)
+#predictor.compile_prediction_summary()
+
+# print(dir(predictor))
+
 # predictor.add_FP_imp_to_classification()
 
 #predictor.get_IDs_for_onto_mapping()
@@ -823,7 +912,7 @@ class NP_Epitope_Prediction:
 
 # exit()
 
-# predictor.get_cluster_stats()
+#predictor.get_cluster_stats()
 # exit()
 # #cluster = predictor.predict_clustering("CN1[C@H]2CC[C@@H]1[C@H]([C@H](C2)OC(=O)C3=CC=CC=C3)C(=O)OC")
 # #print(cluster)
@@ -836,11 +925,11 @@ class NP_Epitope_Prediction:
 # print("Fit classification t_cell")
 # predictor.fit_classification(cell_type = "t_cell")
 
-# print("add_FP_imp")
-# predictor.add_FP_imp_to_classification()
+#print("add_FP_imp")
+#predictor.add_FP_imp_to_classification()
 
-# print("Updating the cluster description")
-# predictor.update_cluster_descri()
+#print("Updating the cluster description")
+#predictor.update_cluster_descri()
 
 # print("add_ontolog")
 # predictor.add_ontolog_to_classification()

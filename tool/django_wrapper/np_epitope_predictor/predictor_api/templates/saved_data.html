@@ -1,0 +1,117 @@
+<!-- {% autoescape off %}
+
+{{ results.cluster_info.Ontology|safe }}
+{{ results.classify_info_b.fp_imp|safe }}
+{{ results.classify_info_t.fp_imp|safe }}
+
+{% endautoescape %} -->
+<!-- <h3>Cluster: {{ results.Cluster}} </h3>
+<h3>Members: {{ results.Members}} </h3>
+<h3>Warning: {{ results.Warning}} </h3>
+<h3>Name: {{ results.Name}} </h3>
+<h3>Ontology description:</h3> -->
+<!-- {{ results.Ontology }} -->
+
+
+<thead>
+<tr>
+<!-- <th></th> -->
+<th>ID</th>
+<th>Name</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for key, onto in results.cluster_info.Ontology.items %}
+
+{% for key, row in onto.items %}
+
+<tr>
+
+<!-- <td></td> -->
+<td> {{ onto.ChEBI_ID }} </td>
+<td> {{ onto.ChEBI_Name }} </td>
+
+</tr>
+
+{% endfor %}
+</tbody>
+
+</table>
+
+
+<!-- 111111111111111111 -->
+
+
+<h3>Ontology description:</h3>
+
+<table border="1" class="dataframe">
+
+<thead>
+<tr>
+<th>ID</th>
+<th>Name</th>
+<th>Corr. p</th>
+<th>p</th>
+<th>Fold</th>
+<th>Sample Percentage</th>
+</thead>
+</tr>
+
+<tbody>
+
+{% for key, onto in results.cluster_info.Ontology.items %}
+
+</tr>
+
+{% for key, value in onto.items %}
+
+<td> {{value}} </td>
+
+{% endfor %}
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+</table>
+
+<h3>B cell prediction:</h3>
+
+<table border="1" class="dataframe">
+
+<thead>
+<tr>
+<th>ID</th>
+<th>Name</th>
+<th>Corr. p</th>
+<th>p</th>
+<th>Fold</th>
+<th>Sample Percentage</th>
+</thead>
+</tr>
+
+<tbody>
+
+{% for key, onto in results.classify_info_b.fp_imp.items %}
+
+</tr>
+
+{% autoescape off %}
+
+{% for key, value in onto.items %}
+
+<td> {{value}} </td>
+
+{% endfor %}
+
+</tr>
+
+{% endautoescape %}
+
+{% endfor %}
+
+</tbody>
+</table>
