@@ -100,7 +100,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-PREDICTOR_PATH  = "/home/paul/GitRepos/NP_epitope_predictor/tool"
+#PREDICTOR_PATH = "/home/paul/GitRepos/NP_epitope_predictor/tool"
+
+#the predictor is two folders up from the settings file,
+#this setup should also work in docker or elsewhere
+PREDICTOR_PATH = os.path.abspath("../../")
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
