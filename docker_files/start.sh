@@ -4,7 +4,7 @@
 #CONDA_PATH="/home/paul/tools/anaconda3/bin/activate"
 
 #docker
-PREDICTOR_PATH=./NP_epitope_predictor/tool/django_wrapper/np_epitope_predictor/
+PREDICTOR_PATH=./tool/django_wrapper/np_epitope_predictor/
 CONDA_PATH="/opt/conda/bin/activate"
 
 # cd ./NP_epitope_predictor/tool/django_wrapper/np_epitope_predictor/
