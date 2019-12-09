@@ -19,6 +19,6 @@ from django.contrib import admin
 from django.urls import path
 
 urlpatterns = [
-	path(r'', include('predictor_api.urls')),
+	path(r'np_epitope_predictor/', include('predictor_api.urls')),
     path('admin/', admin.site.urls),
 ]
