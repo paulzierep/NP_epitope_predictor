@@ -6,9 +6,11 @@ COPY docker_files/requirements.yml /project/
 
 COPY docker_files/start.sh /project/
 
-COPY /tool/ /project/tool/
-
 RUN conda env create -f requirements.yml
+
+RUN pwd
+
+COPY /tool/ /project/tool/
 
 EXPOSE 8000
 

@@ -44,7 +44,7 @@ margin-top: 10px;
 <img id="borderimg" alt="" width=800 src="{% static 'img/classification_web.png' %}"/>
 <div class="caption">
 <br>
-<p>
+<p align="justify">
 Figure 1. (a) The molecular type classification shows the cluster of the input molecule, the number of known members of this cluster, a cluster specific warning (if available), the cluster name and an ontology enrichment analysis. The ontology enrichment analysis (b) was created by performing a <a href="https://www.ebi.ac.uk/chebi/tools/binche/">
 BiNChE</a> analysis for the cluster. BiNChE returns a table with corrected p-values, the fold-enrichment (ratio between the enrichment in the sample and enrichment in the background population), and the sample percentage (percentage of the molecules that contain the ontology term) of significant ontology terms.
 </p>
@@ -56,7 +56,7 @@ BiNChE</a> analysis for the cluster. BiNChE returns a table with corrected p-val
 <img id="borderimg" alt="" width=800 src="{% static 'img/fps_web.png' %}"/>
 <div class="caption">
 <br>
-<p>
+<p align="justify">
 Figure 2. (a) The probability of the molecule to have B cell and T cell activity is predicted. In some cases a specific info for the analysis is provided. The number of known epitopes is also given. (b) A detailed table lists the important substructure features including related statistics. For each feature the null hypothesis was tested, that the feature count of the epitopes was selected from the same distribution than for all ChEBI structures without epitopes.The p-value can be used as a measure for the substructure importance. The p-values were additional Bonferroni corrected.
 The additional statistics for each fingerprint include: the percentage of the epitopes which have this substructure (Sample (P) %), this fraction divided by the percentage of all other molecules with this substructure (Fold), and the difference of the mean substructure count (Mean diff.). (c) For each fingerprint a figure is generated. The count of this fingerprint in the query molecule and the 5 most similar molecules from the <a href="https://www.ebi.ac.uk/chebi/">ChEBI</a> are shown. (d) For each of the similar molecules the following properties are provided: the euclidean distance (E Dist.) of all the significant fingerprints, the tanimoto similarity, known immunogenicity of the molecule (epitope yes or no) and a link to the ChEBI entry (IDs). 
 </p>
