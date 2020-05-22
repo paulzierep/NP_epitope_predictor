@@ -10,7 +10,7 @@ import os
 import pandas as pd
 
 FILE_PATH = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(FILE_PATH, "ML_data")
+DATA_PATH = os.path.join(FILE_PATH, "ML_data_update")
 
 predictor = NP_Epitope_Prediction(data_storage = DATA_PATH)
 

@@ -87,7 +87,8 @@ class NP_Epitope_Data_Conversion:
 
     def assign_epitopes(self, CSV_PATH, epitope_type, id_column = "Non-peptidic epitope Accession"):
 
-        csv_df = pd.read_csv(CSV_PATH)
+        #when directly queried from the IEDB, there is an additional header colum, which is not needed !
+        csv_df = pd.read_csv(CSV_PATH, skiprows=1)
 
         #epitope ID when queried from IEDB are of type CHEBI_90, convert to CHEBI:90
         accs = [acc.replace("_",":") for acc in csv_df[id_column]]
@@ -105,7 +106,7 @@ class NP_Epitope_Data_Conversion:
 #Test the np_epitope_data_conversion
 ###################
 
-# DATA_PATH = "ML_data"
+# DATA_PATH = "ML_data_tests/epitope_update/11.05.2020"
 # SDF_PATH = os.path.join(DATA_PATH, "ChEBI_lite_3star.sdf")
 # B_CELL = os.path.join(DATA_PATH, "epitope_table_b_cell_pos.csv")
 # T_CELL = os.path.join(DATA_PATH, "epitope_table_t_cell_pos.csv")

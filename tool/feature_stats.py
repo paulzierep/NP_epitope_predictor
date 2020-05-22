@@ -60,7 +60,12 @@ def Remove_Correlated_Features(X, threshold = 0.8):
     """
     
     # Create correlation matrix
-    corr_matrix = X.corr().abs()
+    # https://stackoverflow.com/questions/48270953/pandas-corr-and-corrwith-very-slow
+    # use np vectorization and avoid Nan lookup !
+    # old: corr_matrix = X.corr().abs()
+    arr = np.corrcoef(X.values, rowvar=False)
+    corr_df = pd.DataFrame(arr, columns = X.columns, index = X.columns)
+    corr_matrix = corr_df.abs()
 
     # Select upper triangle of correlation matrix
     upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool))

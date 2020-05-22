@@ -117,9 +117,88 @@ the parsing error is recorded and stored in the
 result dict in "error".
 This can be shown to the user, as it is currently implemented in *Results_To_Json* and *Results_To_Html*.
 
-## Training a new classifier
+# Update the Classifier
 
-TODO
+The update requires to download 3 files:
+
+A CSV for each epitope type, eg. B cells and T cells from the IEDB and 
+the SDF file of the ChEBI 3 star dataset (ChEBI_complete_3star.sdf).
+
+The update data is stored in the folder NP_epitope_predictor_gitlab/tool/ML_data_updated;
+this folder is not shared via git (too large), so the ML_data_updated.zip file needs to be
+unzipped first.
+
+The folder ML_data should not be touched, keep the original data for the publication.
+
+### IEDB data
+
+Download the epitopes via an IEDB query:
+1) Go to https://www.iedb.org/
+2) 
+
+| ![](./doku/figures/Selection_031.png) | 
+|:--:| 
+| Select the epitopes |
+
+3) 
+
+| ![](./doku/figures/Selection_032.png) |
+|:--:| 
+| ![](./doku/figures/Selection_033.png) |
+|:--:| 
+| Export csv 
+
+4) Copy the generated file (eg. epitope_table_export_1590139338.zip) into the update folder 
+(NP_epitope_predictor_gitlab/tool/ML_data_updated/epitope_update_input/\*\*update_date\*\*)
+
+5) Unzip the file and rename into epitope_table_b_cell_pos.csv
+6) Repeat the same process for T cells
+
+### ChEBI data
+
+Download the CSV file from ChEBI:
+1) Go to https://www.ebi.ac.uk/chebi/downloadsForward.do
+
+2) 
+| ![](./doku/figures/Selection_034.png) | 
+|:--:| 
+| Downoload the SDF file |
+
+3) Unzip and copy  into the update folder 
+(NP_epitope_predictor_gitlab/tool/ML_data_updated/epitope_update_input/\*\*update_date\*\*)
+
+### Run the update script
+
+1) The update folder 
+(NP_epitope_predictor_gitlab/tool/ML_data_updated/epitope_update_input/\*\*update_date\*\*)
+should contain the files:
+
+	1) epitope_table_b_cell_pos.csv
+	2) epitope_table_t_cell_pos.csv
+	3) ChEBI_lite_3star.sdf
+
+3) Set the path of the update folder in the update script (update_predictor.py)
+(NP_epitope_predictor_gitlab/tool/ML_data_updated/epitope_update_input/\*\*update_date\*\*)
+
+	```
+	#this is where the input data (IEDB csv and ChEBI sdf) is located
+	UPDATE_PATH = os.path.join(DATA_PATH, 'epitope_update_input', '05-11-2020') 
+	```
+
+4) Run the update script (update_predictor.py), approx.: 1780.9s
+
+5) This should generate all the new files in ML_data_updated.
+The django wrapper uses this files. No further modifications needed.
+The online view will now compute results based on the new data.
+
+### Update the docker image
+
+1)
+```
+sudo docker build -t NP_epitope_predictor:1.0 . --no-cache
+```
+
+2) Push docker image to gitlab
 
 # Methods 
 

@@ -2,8 +2,31 @@ from epitope_prediction import NP_Epitope_Prediction, Molecule_Group_Classifier,
 from output_utils import Results_To_Html, Results_To_Json
 
 import pandas as pd
+import os
 
 DATA_PATH = "ML_data"
+
+#load data
+SMILES_PATH = os.path.join(DATA_PATH, "chebi_san_assigned.csv")
+smiles_df = pd.read_csv(SMILES_PATH, index_col = "index")
+
+#print(smiles_df)
+
+predictor = NP_Epitope_Prediction(data_storage = DATA_PATH)
+predictor.fit_chain(smiles_df)
+
+exit()
+
+
+
+
+
+
+
+
+#############################
+#Run a prdiction
+#############################
 
 smiles = "CC(=O)NC1[C@@H](OC(C(C1O)O)CO)O"
 
@@ -16,7 +39,6 @@ smiles = "CCCCCCCCCCCCC\C=C\[C@@H](O)[C@H](CO[C@@H]1O[C@H](CO)[C@@H](O[C@@H]2O[C
 # smiles = "Cc1onc(-c2c(F)cccc2Cl)c1C(=O)N[C@H](C(=O)NCCCC[C@H](N)C(=O)O)[C@@H]1N[C@@H](C(=O)O)C(C)(C)S1"
 
 predictor = NP_Epitope_Prediction(data_storage = DATA_PATH)
-
 
 results = predictor.prediction_chain(smiles, only_epitopes = True, sort_order = "E")
 

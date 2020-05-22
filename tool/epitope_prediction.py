@@ -37,7 +37,10 @@ class Molecule_Group_Classifier:
         self.ontos = {}
 
     def fit_predict(self, X):
-
+        '''
+        fits the molecular group classifier, using the KMeans algo,
+        adds empty dicts for each class, to store member counts, warnings, names and ontology
+        '''
         clusters = self.clf.fit_predict(X)
 
         self.member_counts = pd.Series(clusters).value_counts().to_dict()
@@ -46,6 +49,21 @@ class Molecule_Group_Classifier:
         self.warnings = {k:None for (k, v) in self.member_counts.items()}
         self.names = {k:None for (k, v) in self.member_counts.items()}
         self.ontos = {k:None for (k, v) in self.member_counts.items()}
+
+        return(clusters)
+
+    def predict_bulk(self, X):
+        '''
+        -for update option -
+        Predicts X with the pre-fitted cluster
+        In order to update the entire NP_epitope_predictor but keep all clustering specific info
+        consistent (KMeans output changes when input data is changes, even slightly ), eg. warnings and names, 
+        the updated data is only predicted, the cluster definition / and the clf stays the same,
+        the member_counts are also updated.
+        '''
+
+        clusters = self.clf.predict(X)
+        self.member_counts = pd.Series(clusters).value_counts().to_dict()
 
         return(clusters)
 
@@ -453,11 +471,19 @@ class NP_Epitope_Prediction:
 
 
 
-    def load_target(self, smiles_df):
+    def load_target(self, smiles_input, as_file = True):
         """
         Copies the smiles df to the storage folder, 
         good to keep it all together, in this df the clusters will be assigned
+
+        if as_file, the input is assumend to be a file, loaded and then copied !
         """
+
+        if as_file:
+            smiles_df = pd.read_csv(smiles_input, index_col = "index")
+        else:
+            smiles_df = smiles_input
+
         smiles_df.to_csv(self.target_storage)
 
     def compile_pre_cluster_FPs(self):
@@ -466,7 +492,7 @@ class NP_Epitope_Prediction:
         """
 
         smiles_df = pd.read_csv(self.target_storage, index_col = "index")
-        Smiles_DF_To_Folded_FP_DF(smiles_df, self.fp_folded_storage, count_vector = False)
+        Smiles_DF_To_Folded_FP_DF(smiles_df, self.fp_folded_storage, count_vector = False, verbose = True)
 
 
     def sanitize_pre_cluster_data(self):
@@ -492,7 +518,7 @@ class NP_Epitope_Prediction:
         target.to_csv(self.target_storage)
         fps.to_csv(self.fp_folded_storage)
 
-    def compile_cluster_FPs(self):
+    def compile_cluster_FPs(self, **kwargs):
         """
         Generates unfolded FPs for each cluster
         """
@@ -508,7 +534,7 @@ class NP_Epitope_Prediction:
         for cluster, group in groups:
 
             path = os.path.join(self.fp_unfolded_storage, "{0}.csv".format(cluster))
-            Smiles_DF_To_Unfolded_FP_DF(group, path)
+            Smiles_DF_To_Unfolded_FP_DF(group, path, **kwargs)
 
     def get_cluster_stats(self):
         """
@@ -572,6 +598,21 @@ class NP_Epitope_Prediction:
 
         with open(self.cluster_clf_storage,'wb') as clf_f:
             pickle.dump(cluster_clf,clf_f)
+
+    def predict_clustering_bulk(self):
+        """
+        Uses pre-fitted cluster clf to assign the clusters, 
+        allows to keep the cluster definition, the pre-fitted clf needs to 
+        exists at 'cluster_clf_storage'
+        """
+
+        target = pd.read_csv(self.target_storage, index_col = "index")
+        fps = pd.read_csv(self.fp_folded_storage, index_col = "index")
+
+        with open(self.cluster_clf_storage,'rb') as clf_f:
+            cluster_clf = pickle.load(clf_f)
+            target["clusters"] = cluster_clf.predict_bulk(fps)
+            target.to_csv(self.target_storage)
 
     def update_onto_mapping(self):
 
@@ -766,8 +807,55 @@ class NP_Epitope_Prediction:
             results["classify_info_t"] = None
             return(results)
 
+    # def update_epitopes(self, B_CELL_UPDATE_PATH, T_CELL_UPDATE_PATH, retrain = True):
+    #     '''
+    #     Uses an IEDB dump (of b_cells and t_cells) as csv
+    #     to reassign mols as positive.
+    #     The epitope update is based on the column ---Non-peptidic epitope Accession--- in 
+    #     the csv file.
+
+    #     The update omprises 3 steps.
+
+    #     Afterwards the classification clfs are retrained and important FPs 
+    #     are recalculated
+    #     '''
+
+    #     # cell_types = [('b_cell', B_CELL_UPDATE_PATH),('t_cell', T_CELL_UPDATE_PATH)]
+
+
+    #     update_df = pd.read_csv(B_CELL_UPDATE_PATH, skiprows=1)
+    #     ids = update_df.loc[:,'Non-peptidic epitope Accession'].str.replace('_',':')
+    #     target = pd.read_csv(self.target_storage, index_col = "index")
+    #     b_cells = target.loc[(target['b_cell'] == 1),:]
+        
+    #     print(ids.isin(b_cells.index).value_counts()) 
+    #     print(ids.isin(target.index).value_counts())
+    #     print(ids.isin(target.index))
+    #     print(ids[~ids.isin(target.index)])
+    #     exit()
+
+
+
+
+    #     if retrain:
+    #         print("Fit clf for b_cells")
+    #         self.fit_classification(cell_type = "b_cell")
+
+    #         print("Fit clf for t_cells")
+    #         self.fit_classification(cell_type = "t_cell")
+
+    #         print("Add FP importance to classification")
+    #         self.add_FP_imp_to_classification()
+
 
     def compile_prediction_summary(self, output_folder = 'predictor_summary'):
+        '''
+        Write the ontology desc., figures of the important FPs and associated statistics
+        into a folder.
+        -----This is not used for the prediction, it only provides infos for publication and
+        to summarize the predictor.-----
+        '''
+
 
         os.makedirs(output_folder, exist_ok = True)
 
@@ -834,17 +922,23 @@ class NP_Epitope_Prediction:
                 get_figures_of_FPs(cluster_clf.enrichment_df.index, cluster_clf.y_smiles, out_folder)
 
 
-    def fit_chain(self, smiles_df):
+    def update_chain(self, smiles_input):
         """
         Performs all fitting steps (FP generation, clf fitting)
-        needed to set up the class for prediction
-        each step below can also be run separately.
 
-        Last run took 7262 seconds (2h)
+        -
+        except for the cluster fitting, the already fitted cluster clf is used, 
+        this allows to keep the subsequent cluster specific info, eg. onto and names
+        -
+
         """
 
+        ####################
+        #1) Clustering
+        ####################
+
         print("Copy target df")
-        self.load_target(smiles_df)
+        self.load_target(smiles_input)
 
         print("Compile FPs (bit,folded) for clustering")
         self.compile_pre_cluster_FPs()
@@ -852,8 +946,19 @@ class NP_Epitope_Prediction:
         print("Set correct order for FP and target")
         self.sanitize_pre_cluster_data()
 
-        print("Fit the clusters")
-        self.fit_clustering()
+        #this is the only step different to fit_chain
+        print("Predict the clusters (NO FITTING!!)")
+        self.predict_clustering_bulk()
+
+        print("Update the ontology description")
+        self.update_onto_mapping()
+
+        print("Updating the cluster description")
+        self.update_cluster_descri()
+
+        ####################
+        #2) Classification
+        ####################
 
         print("Compile FPs (count, unfolded) for each cluster for classification")
         self.compile_cluster_FPs()
@@ -864,8 +969,54 @@ class NP_Epitope_Prediction:
         print("Fit clf for t_cells")
         self.fit_classification(cell_type = "t_cell")
 
+        print("Add FP importance to classification")
+        self.add_FP_imp_to_classification()
+
+        print("!!! DONE !!! \n Ready to predict.")
+
+    def fit_chain(self, smiles_input):
+        """
+        Performs all fitting steps (FP generation, clf fitting)
+        needed to set up the class for prediction
+        each step below can also be run separately.
+
+        Last run took 7262 seconds (2h)
+        """
+
+        ####################
+        #1) Clustering
+        ####################
+
+        print("Copy target df")
+        self.load_target(smiles_input)
+
+        print("Compile FPs (bit,folded) for clustering")
+        self.compile_pre_cluster_FPs()
+
+        print("Set correct order for FP and target")
+        self.sanitize_pre_cluster_data()
+
+        print("Fit the clusters")
+        self.fit_clustering()
+
         print("Update the ontology description")
         self.update_onto_mapping()
+
+        print("Updating the cluster description")
+        self.update_cluster_descri()
+
+        ####################
+        #2) Classification
+        ####################
+
+        print("Compile FPs (count, unfolded) for each cluster for classification")
+        self.compile_cluster_FPs()
+
+        print("Fit clf for b_cells")
+        self.fit_classification(cell_type = "b_cell")
+
+        print("Fit clf for t_cells")
+        self.fit_classification(cell_type = "t_cell")
 
         print("Add FP importance to classification")
         self.add_FP_imp_to_classification()

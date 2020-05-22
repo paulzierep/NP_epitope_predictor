@@ -5,11 +5,40 @@ from io import StringIO
 import sys
 import os
 
+from multiprocessing_tools import df_split_apply_multip_combine
+
 def convert_to_count(val):
     if val == 0:
         return(0)
     else:
         return(1)
+
+#helper func for multiprocessing
+def smi2fp(s_df, kwargs):
+
+    result_df = pd.DataFrame(columns = list(range(kwargs['nBits'])))
+
+    for index, (mol_id, row) in enumerate(s_df.iterrows()):
+
+        #show process 
+        if kwargs['verbose']:
+            if index % 1000 == 0:
+                print(index)
+
+        mol = Chem.MolFromSmiles(row["smiles"])
+
+        fp = AllChem.GetHashedMorganFingerprint(
+                             mol,
+                             kwargs['radius'], 
+                             nBits = kwargs['nBits'],
+                             useFeatures = kwargs['useFeatures'], 
+                             useChirality = kwargs['useChirality'],
+                             ).GetNonzeroElements()
+
+        result_df.loc[mol_id,:] = 0
+        result_df.loc[mol_id, fp.keys()] = fp.values()
+
+    return(result_df)
 
 def Smiles_DF_To_Folded_FP_DF(smiles_df, 
                                 OUTPATH = None, 
@@ -21,27 +50,17 @@ def Smiles_DF_To_Folded_FP_DF(smiles_df,
                                 verbose = False,
                                 **kwargs):
 
-    result_df = pd.DataFrame(columns = list(range(nBits)))
 
-    for index, (mol_id, row) in enumerate(smiles_df.iterrows()):
+    #prep data for multiprocessing
+    kwargs = {
+    'verbose':verbose,
+    'radius':radius, 
+    'nBits':nBits, 
+    'useFeatures':useFeatures, 
+    'useChirality':useChirality,
+    }
 
-        #show process 
-        if verbose:
-            if index % 1000 == 0:
-                print(index)
-
-        mol = Chem.MolFromSmiles(row["smiles"])
-
-        fp = AllChem.GetHashedMorganFingerprint(
-                             mol,
-                             radius, 
-                             nBits = nBits,
-                             useFeatures = useFeatures, 
-                             useChirality = useChirality,
-                             ).GetNonzeroElements()
-
-        result_df.loc[mol_id,:] = 0
-        result_df.loc[mol_id, fp.keys()] = fp.values()
+    result_df = df_split_apply_multip_combine(smiles_df, smi2fp, kwargs, num_of_processes = 8)
 
     #simple way to convert count to bit
     if not count_vector:
