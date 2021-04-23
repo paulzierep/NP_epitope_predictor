@@ -23,9 +23,11 @@ from django.views.static import serve
 
 urlpatterns = [
 	path(r'np_epitope_predictor/', include('predictor_api.urls')),
-    path('admin/', admin.site.urls),
+    # path('admin/', admin.site.urls),
 
-    #allows to static files when Debug=False
-    re_path(r'^media/(?P<path>.*)$', serve,{'document_root': settings.MEDIA_ROOT}), 
-	re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}), 
+    #allows to static files when Debug=False -does not work
+ #    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}), 
+	# re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}), 
+	re_path(r'np_epitope_predictor/media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}), 
+	re_path(r'np_epitope_predictor/static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}), 
 ]

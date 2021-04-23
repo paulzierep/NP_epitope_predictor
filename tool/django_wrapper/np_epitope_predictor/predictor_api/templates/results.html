@@ -96,7 +96,7 @@ Classification results:
 <h3>Cluster: {{ results.cluster_info.Cluster }}</h3>
 <h3>Members: {{ results.cluster_info.Members }}</h3>
 <h3>Cluster specific warning: {{ results.cluster_info.Warning }}</h3>
-<h3>Cluster Name: {{ results.cluster_info.Name }}</h3>
+<h3>Cluster name: {{ results.cluster_info.Name }}</h3>
 
 <h3>Ontology description:</h3>
 
@@ -115,7 +115,7 @@ B cell analysis:
 </h4>
 
 <h3>B cell probability: {{ results.classify_info_b.proba }}</h3>
-<h3>Info: {{ results.classify_info_b.fitting_info }}</h3>
+<h3>{{ results.classify_info_b.fitting_info }}</h3>
 <h3>Known epitopes: {{ results.classify_info_b.p_support }}</h3>
 <h3>Substructure importance:</h3>
 
@@ -134,7 +134,7 @@ T cell analysis:
 </h4>
 
 <h3>T cell probability: {{ results.classify_info_t.proba }}</h3>
-<h3>Info: {{ results.classify_info_t.fitting_info }}</h3>
+<h3>{{ results.classify_info_t.fitting_info }}</h3>
 <h3>Known epitopes: {{ results.classify_info_t.p_support }}</h3>
 <h3>Substructure importance:</h3>
 

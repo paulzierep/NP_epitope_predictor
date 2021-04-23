@@ -456,6 +456,9 @@ class NP_Epitope_Prediction:
         #assign the onotogy from there
         self.custom_cluster_descri = os.path.join(data_storage, "cluster_descri.csv")
 
+        #assign the predictor specific information from here
+        self.custom_predictor_descri = os.path.join(data_storage, "predictor_descri.csv")
+
         #cluster stats (like the feature importance) are dumped here
         #self.cluster_stats = os.path.join(data_storage, "cluster_stats")
 
@@ -736,6 +739,49 @@ class NP_Epitope_Prediction:
             with open(path,'wb') as clf_f:
                 pickle.dump(e_clf,clf_f)
 
+    def update_epitope_prediction_info(self):
+        '''
+        Updates the "fitting_info" field of the epitope prediction clfs,
+        the old version stored on ---There are not enough known epitopes (0) for this molecule group----
+        for low positive samples groupe. This update steps adds an additional generalization indivation:
+        Highest AUC: X; # of features to reach AUC of 0.8: Y
+        '''
+
+        print('Load custom_predictor_descri')
+        predictor_infos = pd.read_csv(self.custom_predictor_descri)
+
+        print('Get classifiers')
+        #get the classification objects
+
+        for clf_file in os.listdir(self.classifier_clf_storage):
+
+            #get classifier path
+            clf_path = os.path.join(self.classifier_clf_storage, clf_file)
+
+            #get cluster number
+            cluster = int(re.search('cluster_(\d)_type', clf_file).groups()[0])
+
+            #get epitope type
+            if 't_cell' in clf_file:
+                cluster_type = 't'
+            if 'b_cell' in clf_file:
+                cluster_type = 'b'
+
+            print('Updating predictor of cluster: {0} and type: {1}'.format(cluster, cluster_type))
+
+            with open(clf_path, "rb") as clf_f:
+                e_clf = pickle.load(clf_f)
+
+                #this overwrites the original warning, should be adjusted or seperated, but I 
+                #consider this warning more meaningful atm
+                e_clf.clf_information["fitting_info"] = predictor_infos.loc[cluster, cluster_type]
+
+            with open(clf_path,'wb') as clf_f:
+                pickle.dump(e_clf,clf_f)
+
+        print('Done ! fitting_info keyword updated based on data found in path: {0}'.format(self.custom_predictor_descri))
+
+
     def predict_classification(
         self, 
         smiles_to_predict, 
@@ -969,6 +1015,9 @@ class NP_Epitope_Prediction:
         print("Fit clf for t_cells")
         self.fit_classification(cell_type = "t_cell")
 
+        print("Update generalization info")
+        self.update_epitope_prediction_info() #needs to be rewritten, if clusters or benchmark has changed !
+
         print("Add FP importance to classification")
         self.add_FP_imp_to_classification()
 
@@ -999,6 +1048,11 @@ class NP_Epitope_Prediction:
         print("Fit the clusters")
         self.fit_clustering()
 
+        '''
+        The onto mapping needs to be set up based on the sanitized data: ToDo: Toturial HowTo using Binchi
+        -----------the pipe should be stopped here to do this step manually ---------------
+        '''
+
         print("Update the ontology description")
         self.update_onto_mapping()
 
@@ -1017,6 +1071,9 @@ class NP_Epitope_Prediction:
 
         print("Fit clf for t_cells")
         self.fit_classification(cell_type = "t_cell")
+
+        print("Update generalization info")
+        self.update_epitope_prediction_info() #needs to be rewritten, if clusters or benchmark has changed !
 
         print("Add FP importance to classification")
         self.add_FP_imp_to_classification()
@@ -1081,6 +1138,9 @@ class NP_Epitope_Prediction:
 
 #print("Updating the cluster description")
 #predictor.update_cluster_descri()
+
+# print("Updating the cluster description")
+# predictor.update_cluster_descri()
 
 # print("add_ontolog")
 # predictor.add_ontolog_to_classification()

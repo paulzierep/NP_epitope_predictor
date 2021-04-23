@@ -4,6 +4,8 @@ import matplotlib.cm as cm
 import pandas as pd
 import numpy as np
 
+plt.rcParams.update({'font.size': "14"}) #bigger text fro phd
+
 ###########################
 #Dataset choice
 ###########################
@@ -12,7 +14,7 @@ data_storage = os.path.join('benchmark_data')
 
 data_to_use = {
 'FP_CT_R3_MN':'RF',
-'FP_CT_R3_MR':'RF (Random epitopes)',
+'FP_CT_R3_MR':'Dummy RF',
 'FP_CT_R3_MN_NN':'NN',
 'FP_CT_R3_MN_KNN':'KNN',
 }
@@ -25,8 +27,8 @@ c_choice = cm.rainbow(np.linspace(0, 1, len(data_to_use)))
 for index, data_name in enumerate(data_to_use):
     colors[data_name] = c_choice[index]
 
-fig1, axs1 = plt.subplots(4,2,figsize = (15,15))
-fig2, axs2 = plt.subplots(4,2,figsize = (15,15))
+fig1, axs1 = plt.subplots(4,2,figsize = (8.27,11.69))
+fig2, axs2 = plt.subplots(4,2,figsize = (8.27,11.69))
 axis1 = axs1.reshape(-1)
 axis2 = axs2.reshape(-1)
 
@@ -54,7 +56,7 @@ for folder in os.listdir(data_storage):
                     # print(df['mean'])
                     # exit()
 
-                    label = "{0}, {1}".format(data_to_use[folder], cell_types[cell_type])
+                    label = "{0}".format(data_to_use[folder])
                     #plot
 
                     if cell_type == 'b_cell':
@@ -70,27 +72,47 @@ for folder in os.listdir(data_storage):
                     # print(df['err'])
                     # print(color)
 
+
+
                     df['mean'].plot(yerr = df['err'], ax = axis[cluster], label=label)
 
                     #axis properties    
                     axis[cluster].set_xscale('log', basex=2)
                     axis[cluster].set_xticks(base_range)
-                    axis[cluster].set_xticklabels(base_range)
+                    axis[cluster].set_xticklabels(base_range, rotation=90)
                     
                     axis[cluster].set_xlabel("Features (chi2)")
                     axis[cluster].set_ylabel("ROC-AUC") 
                     
                     # axis[index].axhline(y=sim_data_storage_b[index], ls = "--", color = "blue", label = 'Sim (B cell)')
                     
-                    axis[cluster].axhline(y=0.8, ls = "-", color = "black")
-                    
                     axis[cluster].set_title("Cluster {0}".format(cluster))
-                    axis[cluster].legend(loc = 'lower right')
+
+                    axis[cluster].set_ylim(0.4,1)
+                    # axis[cluster].legend(loc = 'lower right', bbox_to_anchor=(1, 0))
+
+# axis1[3].set_visible(False)
+# axis2[3].set_visible(False)
+
+# for ax in axis1:
+#     ax.axhline(y=0.8, ls = "-", color = "black", label = 'AUC = 0.8')
+# for ax in axis2:
+#     ax.axhline(y=0.8, ls = "-", color = "black", label = 'AUC = 0.8')
+    # axis2[cluster].axhline(y=0.8, ls = "-", color = "black", label = 'AUC = 0.8')
+
+axis1[3].legend(*axis1[2].get_legend_handles_labels(), loc='center', title="Legend")
+axis1[3].axis('off')
+
+axis2[3].legend(*axis2[2].get_legend_handles_labels(), loc='center', title="Legend")
+axis2[3].axis('off')
+
+# axis1[2].legend(loc=(2, 0.5))
+# axis2[2].legend(loc=(2, 0.5))
 
 fig1.tight_layout()
 fig2.tight_layout()
-fig1.savefig('AUC_vs_Features_CLFs_b_cell.png', bbox_inches = "tight")
-fig2.savefig('AUC_vs_Features_CLFs_t_cell.png', bbox_inches = "tight")
+fig1.savefig('AUC_vs_Features_CLFs_b_cell.pdf', bbox_inches = "tight")
+fig2.savefig('AUC_vs_Features_CLFs_t_cell.pdf', bbox_inches = "tight")
 exit()
 
 #############################

@@ -5,6 +5,16 @@ import pandas as pd
 import os
 
 #############################
+#Run specific methods 
+#############################
+
+FILE_PATH = os.path.dirname(os.path.abspath(__file__))
+DATA_PATH = os.path.join(FILE_PATH, "ML_data_updated")
+
+predictor = NP_Epitope_Prediction(data_storage = DATA_PATH)
+predictor.update_epitope_prediction_info()
+
+#############################
 #Retrain the classifier
 #############################
 
@@ -15,7 +25,7 @@ import os
 # smiles_df = pd.read_csv(SMILES_PATH, index_col = "index")
 
 # #print(smiles_df)
-DATA_PATH = "ML_data_tests"
+# DATA_PATH = "ML_data_tests"
 # predictor = NP_Epitope_Prediction(data_storage = DATA_PATH)
 
 # #refits the entire predictor, need reassignment of molecular groups and ontos

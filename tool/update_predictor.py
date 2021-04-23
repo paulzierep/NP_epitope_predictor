@@ -14,7 +14,7 @@ from data_helper import NP_Epitope_Data_Conversion
 DATA_PATH = "ML_data_updated"
 
 #this is where the input data (IEDB csv and ChEBI sdf) is located
-UPDATE_PATH = os.path.join(DATA_PATH, 'epitope_update_input', '05-11-2020') 
+UPDATE_PATH = os.path.join(DATA_PATH, 'epitope_update_input', '10-29-2020') 
 
 #the input data files
 SDF_PATH = os.path.join(UPDATE_PATH, "ChEBI_lite_3star.sdf")

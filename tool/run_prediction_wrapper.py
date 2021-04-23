@@ -10,7 +10,7 @@ import os
 import pandas as pd
 
 FILE_PATH = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(FILE_PATH, "ML_data_update")
+DATA_PATH = os.path.join(FILE_PATH, "ML_data_updated")
 
 predictor = NP_Epitope_Prediction(data_storage = DATA_PATH)
 
@@ -21,5 +21,9 @@ def prediction2django(smiles):
 
 	return(results)
 
-# json = prediction2json('CCCC')
-# print(json)
+##################
+# test
+##################
+
+# results = prediction2django('CCCCC')
+# print(results)

@@ -23,10 +23,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '+z3vc!osbq44k*bziie1rbo)4%5-dx_ddo2z0f((%r82y=s4x('
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = False #needs to be True to server static files correctly, otherwise need to check how la jolla dev server handles the static files
 
 ALLOWED_HOSTS = ['*']
-
 
 # Application definition
 
@@ -120,14 +119,15 @@ USE_L10N = True
 USE_TZ = True
 
 
-MEDIA_URL = '/media/'
+MEDIA_URL = '/np_epitope_predictor/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = '/np_epitope_predictor/static/'
 # STATICFILES_DIRS = [
-#     os.path.join(BASE_DIR, "static"),
+#     os.path.join(BASE_DIR, "predictor_api", "static"),
 # ]
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+STATIC_ROOT = os.path.join(BASE_DIR,'static')
