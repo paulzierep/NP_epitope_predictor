@@ -2,3 +2,5 @@ benchmark
 .git
 .gitignore
 tool/ML_data
+
+NP_epitope_predictor_docker_image.tar
