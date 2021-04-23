@@ -41,3 +41,12 @@ sudo docker tag np_epitope_predictor:1.0 registry.gitlab.com/iedb-tools/nonpepti
 sudo docker login registry.gitlab.com/iedb-tools/nonpeptidic-predictor
 sudo docker push registry.gitlab.com/iedb-tools/nonpeptidic-predictor
 ```
+
+## Store image locally
+
+A copy of the image is stored on the fileserver TODO[location]
+
+```
+docker save -o NP_epitope_predictor_docker_image.tar np_epitope_predictor:1.0 #store
+docker load -i NP_epitope_predictor_docker_image.tar #load
+```
