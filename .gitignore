@@ -11,3 +11,5 @@ benchmark_data/
 __pycache__/
 *.py[cod]
 *$py.class
+
+NP_epitope_predictor_docker_image.tar
