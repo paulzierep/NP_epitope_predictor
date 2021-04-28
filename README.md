@@ -142,9 +142,9 @@ Download the epitopes via an IEDB query:
 
 3) 
 
-| ![](./doku/figures/Selection_032.png) |
+| ![](./doku/how_to_update/Selection_032.png) |
 |:--:| 
-| ![](./doku/figures/Selection_033.png) |
+| ![](./doku/how_to_update/Selection_033.png) |
 |:--:| 
 | Export csv 
 
@@ -160,7 +160,7 @@ Download the CSV file from ChEBI:
 1) Go to https://www.ebi.ac.uk/chebi/downloadsForward.do
 
 2) 
-| ![](./doku/figures/Selection_034.png) | 
+| ![](./doku/how_to_update/Selection_034.png) | 
 |:--:| 
 | Downoload the SDF file |
 
