@@ -121,7 +121,7 @@ This can be shown to the user, as it is currently implemented in *Results_To_Jso
 
 The update requires to download 3 files:
 
-A CSV for each epitope type, eg. B cells and T cells from the IEDB and 
+A CSV for each epitope type, i.e. B cells and T cells from the IEDB and 
 the SDF file of the ChEBI 3 star dataset (ChEBI_complete_3star.sdf).
 
 The update data is stored in the folder NP_epitope_predictor_gitlab/tool/ML_data_updated;
@@ -136,7 +136,7 @@ Download the epitopes via an IEDB query:
 1) Go to https://www.iedb.org/
 2) 
 
-| ![](./doku/figures/Selection_031.png) | 
+| ![](./doku/how_to_update/Selection_031.png) | 
 |:--:| 
 | Select the epitopes |
 

@@ -44,7 +44,7 @@ sudo docker push registry.gitlab.com/iedb-tools/nonpeptidic-predictor
 
 ## Store image locally
 
-A copy of the image is stored on the fileserver TODO[location]
+A copy of the image can be obtained by contacting http://www.pharmbioinf.uni-freiburg.de/
 
 ```
 docker save -o NP_epitope_predictor_docker_image.tar np_epitope_predictor:1.0 #store
