@@ -8,7 +8,7 @@
 git clone https://github.com/paulzierep/NP_epitope_predictor.git
 ```
 
-### Requirements (Conda)
+### Requirements (Conda) - Recommended 
 
 Install conda:
 
@@ -64,7 +64,7 @@ An example how to run the prediction is given in the script:
 ./tools/run_prediction.py
 ```
 
-The predictor needs as input a correct SMILES string eg: "CCCCCCO".
+The predictor needs as input a correct SMILES string e.g.: "CCCCCCO".
 
 There are two optional arguments which are currently included:
 
@@ -77,7 +77,7 @@ sort_order | "T" | Uses the overall Tanimoto Coefficient as similarity measure, 
 
 ### Output
 
-The predictor returns a dict which holds all needed information, eg.: Class, B_cell probability...
+The predictor returns a dict which holds all needed information, e.g.: Class, B_cell probability...
 
 A tree of the dict is shown below. The ontology and fp_imp (FP importance) are pandas data frames. They can be converted into html, dict or json with (.to_html(),.to_dict() or to_json()).
 
@@ -120,7 +120,7 @@ This can be shown to the user, as it is currently implemented in *Results_To_Jso
 ### Django wrapper
 
 To simplify the useage of the NP_epitope_predictor a lightweight django wrapper is also available. The wrapper allows 
-to handle the input and output without the need to use the python API. A running version of the wrapper is currently hosted at:
+for the handling of input and output without the need to use the python API. A running version of the wrapper is currently hosted at:
 http://tools-staging.iedb.org/np_epitope_predictor/
 
 The wrapper can be used via:
@@ -164,7 +164,7 @@ Download the epitopes via an IEDB query:
 |:--:| 
 | Export csv 
 
-4) Copy the generated file (eg. epitope_table_export_1590139338.zip) into the update folder 
+4) Copy the generated file (e.g. epitope_table_export_1590139338.zip) into the update folder 
 (NP_epitope_predictor_gitlab/tool/ML_data_updated/epitope_update_input/\*\*update_date\*\*)
 
 5) Unzip the file and rename into epitope_table_b_cell_pos.csv
