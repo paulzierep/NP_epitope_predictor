@@ -61,7 +61,7 @@ unzip ML_data.zip
 An example how to run the prediction is given in the script:
 
 ```
-cd ./tools/run_prediction.py
+./tools/run_prediction.py
 ```
 
 The predictor needs as input a correct SMILES string eg: "CCCCCCO".
@@ -116,6 +116,22 @@ If the SMILES can not be parsed,
 the parsing error is recorded and stored in the 
 result dict in "error".
 This can be shown to the user, as it is currently implemented in *Results_To_Json* and *Results_To_Html*.
+
+### Django wrapper
+
+To simplify the useage of the NP_epitope_predictor a lightweight django wrapper is also available. The wrapper allows 
+to handle the input and output without the need to use the python API. A running version of the wrapper is currently hosted at:
+http://tools-staging.iedb.org/np_epitope_predictor/
+
+The wrapper can be used via:
+
+```
+conda activate **env_name**
+cd tool/django_wrapper/np_epitope_predictor
+python manage runserver
+```
+
+Open the wrapper in a web browser via http://127.0.0.1:8000/np_epitope_predictor/
 
 # Update the Classifier
 
