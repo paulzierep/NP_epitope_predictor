@@ -1,5 +1,9 @@
 # NP_epitope_predictor
 
+This is the code of the Non-peptidic epitope prediction tool (NP_epitope_predictor).
+A running version of the tool is available at: http://tools-staging.iedb.org/np_epitope_predictor/
+Licensed under the Non-Profit Open Software License version 3.0.
+
 ## Installation
 
 ### Clone the Repo
